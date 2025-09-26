@@ -1,0 +1,80 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/.428fae51bf8ac3601c8baf4d1f179e94e31df7e0-audit.json",
+    "files": [
+        {
+            "date": 1758549573730,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-22.log",
+            "hash": "58b59f1eb3dad274e73deaefde5d616f7cf9c3935d01c54abb9c590877ad8c98"
+        },
+        {
+            "date": 1758603436947,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-23.log",
+            "hash": "8e07b0c21395dd69165c6257004e9c147a71a6b158bf9a9b81da75d97c4c71f6"
+        },
+        {
+            "date": 1758603440762,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-23.log.1",
+            "hash": "712e08b60a5cd9345eec7657a67e0acda27b51e650035fc73d92c0997b88e562"
+        },
+        {
+            "date": 1758603444093,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-23.log.2",
+            "hash": "92c3b62ac17728c897f7fb1e3e8340ca5ebcfde5fabad9eb8420d64f2ab59e19"
+        },
+        {
+            "date": 1758603447343,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-23.log.3",
+            "hash": "28692e435699e63e64f18ca7474c33e75582a1335c444312537d54e44e0b9931"
+        },
+        {
+            "date": 1758603450717,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-23.log.4",
+            "hash": "e4029304e57183faa186c3b1e81946add24e5795a4f8f83d79c4354ea1c687c3"
+        },
+        {
+            "date": 1758701082226,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-24.log",
+            "hash": "db32b12e5f4a9d9f3bb8032bcc84be04bb208ac3f1042ac880ed213f5849b717"
+        },
+        {
+            "date": 1758709560817,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-24.log.1",
+            "hash": "eb9b08ecc1f00dac2c9f1f03f17ffaa91ec5fc0e30bef047c980852b75f05121"
+        },
+        {
+            "date": 1758709564078,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-24.log.2",
+            "hash": "4f1f758902d18218ef0767e2ccf1b0d66a225c2428715225cbfbbe587872b818"
+        },
+        {
+            "date": 1758709567320,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-24.log.3",
+            "hash": "88c369377ff28485f4fe7a03ea869174af748d9cd26e6bbcf3053d849dcf2959"
+        },
+        {
+            "date": 1758889045428,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-26.log",
+            "hash": "30179932e968fbc35f206e11119b368edab0ed758432329a9f693721e36ac78a"
+        },
+        {
+            "date": 1758900223227,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-26.log.1",
+            "hash": "eed3876f9addb85195c04504f7e16cddf14c7802e524c49b4da3e141d9ab34c8"
+        },
+        {
+            "date": 1758900227783,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-26.log.2",
+            "hash": "1c1ed405c5e8535875064c7a6de03ddaee6c56cc760bf12d38f1dbc655071604"
+        },
+        {
+            "date": 1758900232001,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-26.log.3",
+            "hash": "097bdffc32da70883e5556ebdb5755fd2a0d1a4d970e0925047a7f4f2e5e4adc"
+        }
+    ],
+    "hashType": "sha256"
+}

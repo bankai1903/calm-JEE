@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyBuddy AI - Enhanced Learning Platform</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.0.0/math.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#6366f1">
+</head>
+<body data-theme="light">
+  <!-- App Container -->
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <div class="logo-section">
+        <div class="logo">🧠</div>
+        <div class="logo-text">StudyBuddy</div>
+      </div>
+      
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="#" class="nav-link active" data-section="chat">
+            <i class="fas fa-comments"></i>
+            <span>AI Chat</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-section="history">
+            <i class="fas fa-history"></i>
+            <span>Chat History</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-section="dashboard">
+            <i class="fas fa-chart-line"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-section="quiz">
+            <i class="fas fa-brain"></i>
+            <span>Quizzes</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-section="achievements">
+            <i class="fas fa-trophy"></i>
+            <span>Achievements</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-section="study-timer">
+            <i class="fas fa-clock"></i>
+            <span>Study Timer</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-section="progress">
+            <i class="fas fa-graduation-cap"></i>
+            <span>Progress</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-section="profile">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+          </a>
+        </li>
+      </ul>
+      
+      <div class="user-section">
+        <div class="user-profile">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-info">
+            <h4 id="userName">Anonymous</h4>
+            <p><span class="level-badge"><i class="fas fa-star"></i> Level <span id="userLevel">1</span></span></p>
+          </div>
+        </div>
+        <button class="btn btn-secondary" onclick="logout()" style="width: 100%; margin-top: 12px;">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="app-header">
+        <h1 class="header-title" id="pageTitle">
+          <i class="fas fa-comments"></i>
+          AI Study Assistant
+        </h1>
+        <div class="header-actions">
+          <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span>Online</span>
+          </div>
+          <button class="theme-toggle" onclick="toggleTheme()">
+            <i class="fas fa-moon" id="themeIcon"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Chat Section -->
+      <section class="content-section active" data-section="chat">
+        <div class="chat-interface">
+          <div class="chat-messages" id="chatMessages">
+            <div class="welcome-section">
+              <span class="welcome-emoji">🎓</span>
+              <h2 class="welcome-title">Welcome to StudyBuddy AI!</h2>
+              <p class="welcome-subtitle">Your intelligent study companion is ready to help you learn</p>
+              
+              <div class="quick-actions">
+                <div class="quick-action" onclick="quickQuestion('Explain quantum physics basics')">
+                  <span class="quick-action-icon">⚛️</span>
+                  <div class="quick-action-title">Physics Help</div>
+                  <div class="quick-action-desc">Get physics concepts explained</div>
+                </div>
+                <div class="quick-action" onclick="quickQuestion('Solve this math equation: x² + 5x + 6 = 0')">
+                  <span class="quick-action-icon">🧮</span>
+                  <div class="quick-action-title">Math Problem</div>
+                  <div class="quick-action-desc">Solve step-by-step</div>
+                </div>
+                <div class="quick-action" onclick="quickQuestion('Help me write an essay about climate change')">
+                  <span class="quick-action-icon">✍️</span>
+                  <div class="quick-action-title">Writing Help</div>
+                  <div class="quick-action-desc">Essay and writing support</div>
+                </div>
+                <div class="quick-action" onclick="quickQuestion('Create a study plan for biology exam')">
+                  <span class="quick-action-icon">📚</span>
+                  <div class="quick-action-title">Study Plan</div>
+                  <div class="quick-action-desc">Personalized study schedule</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div id="typingIndicator" class="typing-indicator message">
+            <div class="message-avatar" style="background: var(--secondary-gradient);">🤖</div>
+            <div class="typing-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+          
+          <div class="chat-input">
+            <div class="input-wrapper">
+              <textarea id="userInput" placeholder="Ask me anything about your studies..." rows="1"></textarea>
+              <div class="input-actions">
+                <button class="voice-button" onclick="toggleVoiceRecording()">
+                  <i class="fas fa-microphone" id="voiceIcon"></i>
+                </button>
+                <button class="attachment-button" onclick="openFileUpload()">
+                  <i class="fas fa-paperclip"></i>
+                </button>
+              </div>
+            </div>
+            <button id="sendButton" onclick="sendMessage()">
+              <i class="fas fa-paper-plane" id="sendIcon"></i>
+              <div class="loading-dots" id="sendLoading">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chat History Section -->
+      <section class="content-section" data-section="history">
+        <div class="history-header">
+          <h3 class="section-title">
+            <i class="fas fa-history"></i>
+            Chat History
+          </h3>
+          
+          <div class="history-controls">
+            <div class="history-filters">
+              <div class="filter-group">
+                <input type="text" id="historySearch" placeholder="Search conversations..." class="filter-input">
+                <button class="btn-icon" onclick="searchChatHistory()" title="Search">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+              
+              <div class="filter-group">
+                <select id="historySubject" class="filter-select" onchange="filterChatHistory()">
+                  <option value="">All Subjects</option>
+                </select>
+              </div>
+              
+              <div class="filter-group">
+                <input type="date" id="historyDateFrom" class="filter-input" onchange="filterChatHistory()" title="From Date">
+                <input type="date" id="historyDateTo" class="filter-input" onchange="filterChatHistory()" title="To Date">
+              </div>
+              
+              <button class="btn-icon" onclick="clearHistoryFilters()" title="Clear Filters">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div class="history-actions">
+              <button class="btn btn-secondary" onclick="toggleBulkSelect()">
+                <i class="fas fa-check-square"></i>
+                <span id="bulkSelectText">Select</span>
+              </button>
+              <button class="btn btn-secondary" onclick="refreshChatHistory()">
+                <i class="fas fa-sync-alt"></i>
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="history-stats" id="historyStats" style="display: none;">
+          <div class="stat-item">
+            <span class="stat-value" id="totalSessions">0</span>
+            <span class="stat-label">Sessions</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="totalMessages">0</span>
+            <span class="stat-label">Messages</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="totalDuration">0</span>
+            <span class="stat-label">Hours</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="uniqueSubjects">0</span>
+            <span class="stat-label">Subjects</span>
+          </div>
+        </div>
+
+        <div class="bulk-actions" id="bulkActions" style="display: none;">
+          <span id="selectedCount">0 selected</span>
+          <button class="btn btn-danger" onclick="bulkDeleteSessions()">
+            <i class="fas fa-trash"></i>
+            Delete Selected
+          </button>
+          <button class="btn btn-secondary" onclick="cancelBulkSelect()">
+            Cancel
+          </button>
+        </div>
+
+        <div class="history-container" id="historyContainer">
+          <div class="loading-state" id="historyLoading">
+            <div class="spinner"></div>
+            <p>Loading chat history...</p>
+          </div>
+          
+          <div class="empty-state" id="historyEmpty" style="display: none;">
+            <div class="empty-icon">💬</div>
+            <h3>No chat history found</h3>
+            <p>Start a conversation to see your chat history here.</p>
+            <button class="btn" onclick="showSection('chat')">
+              <i class="fas fa-plus"></i>
+              Start New Chat
+            </button>
+          </div>
+
+          <div class="history-list" id="historyList"></div>
+          
+          <div class="history-pagination" id="historyPagination" style="display: none;">
+            <button class="btn btn-secondary" onclick="loadHistoryPage(chatHistory.currentPage - 1)" id="prevPage" disabled>
+              <i class="fas fa-chevron-left"></i>
+              Previous
+            </button>
+            <span class="pagination-info" id="paginationInfo">Page 1 of 1</span>
+            <button class="btn btn-secondary" onclick="loadHistoryPage(chatHistory.currentPage + 1)" id="nextPage" disabled>
+              Next
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dashboard Section -->
+      <section class="content-section" data-section="dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value">
+              <span id="totalStudyTime">0</span>
+              <i class="fas fa-clock stat-icon"></i>
+            </div>
+            <div class="stat-label">Study Hours</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">
+              <span id="questionsAsked">0</span>
+              <i class="fas fa-question-circle stat-icon"></i>
+            </div>
+            <div class="stat-label">Questions Asked</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">
+              <span id="currentStreak">0</span>
+              <i class="fas fa-fire stat-icon"></i>
+            </div>
+            <div class="stat-label">Day Streak</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">
+              <span id="xpPoints">0</span>
+              <i class="fas fa-star stat-icon"></i>
+            </div>
+            <div class="stat-label">XP Points</div>
+          </div>
+        </div>
+        
+        <div class="progress-section">
+          <h3 class="section-title">
+            <i class="fas fa-chart-bar"></i>
+            Study Analytics
+          </h3>
+          <div class="chart-container">
+            <canvas id="studyChart" width="400" height="200"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quiz Section -->
+      <section class="content-section" data-section="quiz">
+        <div class="quiz-header">
+          <h3 class="section-title">
+            <i class="fas fa-brain"></i>
+            Practice Quiz
+          </h3>
+          <div class="quiz-controls">
+            <button class="btn" onclick="generateQuiz()">New Quiz</button>
+            <select id="quizSubject" class="btn btn-secondary">
+              <option value="mathematics">Mathematics</option>
+              <option value="physics">Physics</option>
+              <option value="chemistry">Chemistry</option>
+              <option value="biology">Biology</option>
+              <option value="computer_science">Computer Science</option>
+            </select>
+          </div>
+        </div>
+        
+        <div id="quizContainer" class="loading">
+          <div class="welcome-section">
+            <span class="welcome-emoji">🎯</span>
+            <h2 class="welcome-title">Ready for a Challenge?</h2>
+            <p class="welcome-subtitle">Test your knowledge with AI-generated quizzes</p>
+            <button class="btn" onclick="generateQuiz()" style="margin-top: 20px;">
+              <i class="fas fa-play"></i> Start Quiz
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Achievements Section -->
+      <section class="content-section" data-section="achievements">
+        <h3 class="section-title">
+          <i class="fas fa-trophy"></i>
+          Your Achievements
+        </h3>
+        <div class="achievements-grid" id="achievementsGrid">
+          <!-- Achievements will be loaded here -->
+        </div>
+      </section>
+
+      <!-- Study Timer Section -->
+      <section class="content-section" data-section="study-timer">
+        <h3 class="section-title">
+          <i class="fas fa-clock"></i>
+          Pomodoro Study Timer
+        </h3>
+        
+        <div class="study-timer">
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="timer-controls">
+            <button class="timer-btn" id="startBtn" onclick="startTimer()">
+              <i class="fas fa-play"></i> Start
+            </button>
+            <button class="timer-btn pause" id="pauseBtn" onclick="pauseTimer()" style="display: none;">
+              <i class="fas fa-pause"></i> Pause
+            </button>
+            <button class="timer-btn reset" onclick="resetTimer()">
+              <i class="fas fa-stop"></i> Reset
+            </button>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <div class="quick-action" onclick="setTimerPreset(25)">
+            <span class="quick-action-icon">🍅</span>
+            <div class="quick-action-title">Pomodoro</div>
+            <div class="quick-action-desc">25 minutes focus</div>
+          </div>
+          <div class="quick-action" onclick="setTimerPreset(15)">
+            <span class="quick-action-icon">⚡</span>
+            <div class="quick-action-title">Quick Study</div>
+            <div class="quick-action-desc">15 minutes session</div>
+          </div>
+          <div class="quick-action" onclick="setTimerPreset(5)">
+            <span class="quick-action-icon">☕</span>
+            <div class="quick-action-title">Short Break</div>
+            <div class="quick-action-desc">5 minutes break</div>
+          </div>
+          <div class="quick-action" onclick="setTimerPreset(45)">
+            <span class="quick-action-icon">📖</span>
+            <div class="quick-action-title">Deep Study</div>
+            <div class="quick-action-desc">45 minutes focus</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Progress Section -->
+      <section class="content-section" data-section="progress">
+        <h3 class="section-title">
+          <i class="fas fa-graduation-cap"></i>
+          Learning Progress
+        </h3>
+        
+        <div class="progress-section">
+          <h4 style="color: white; margin-bottom: 16px;">Subject Mastery</h4>
+          <div class="subject-progress" id="subjectProgress">
+            <div class="progress-item">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: white;">Mathematics</span>
+                <span style="color: rgba(255,255,255,0.7);">75%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 75%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="chart-container" style="margin-top: 32px;">
+          <h4 style="color: white; margin-bottom: 16px;">Weekly Activity</h4>
+          <canvas id="progressChart" width="400" height="200"></canvas>
+        </div>
+      </section>
+
+      <!-- Profile Section -->
+      <section class="content-section" data-section="profile">
+        <h3 class="section-title">
+          <i class="fas fa-user"></i>
+          Profile Settings
+        </h3>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="user-avatar" style="font-size: 48px; width: 80px; height: 80px; margin: 0 auto 16px;">
+              <span id="profileAvatar">A</span>
+            </div>
+            <div class="stat-label" style="margin-bottom: 8px;">
+              <span id="profileName">Anonymous User</span>
+            </div>
+            <div class="level-badge">
+              <i class="fas fa-star"></i> Level <span id="profileLevel">1</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 32px;">
+          <h4 style="color: white; margin-bottom: 16px;">Study Preferences</h4>
+          <div class="quick-actions">
+            <div class="quick-action">
+              <span class="quick-action-icon">🎯</span>
+              <div class="quick-action-title">Learning Goals</div>
+              <div class="quick-action-desc">Set your study objectives</div>
+            </div>
+            <div class="quick-action">
+              <span class="quick-action-icon">📊</span>
+              <div class="quick-action-title">Progress Reports</div>
+              <div class="quick-action-desc">View detailed analytics</div>
+            </div>
+            <div class="quick-action">
+              <span class="quick-action-icon">🔔</span>
+              <div class="quick-action-title">Notifications</div>
+              <div class="quick-action-desc">Manage study reminders</div>
+            </div>
+            <div class="quick-action" onclick="exportUserData()">
+              <span class="quick-action-icon">💾</span>
+              <div class="quick-action-title">Export Data</div>
+              <div class="quick-action-desc">Download your progress</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Notification Container -->
+  <div class="notification-container" id="notificationContainer"></div>
+
+  <!-- Hidden File Input -->
+  <input type="file" id="fileInput" accept=".pdf,.txt,.doc,.docx" style="display: none;" onchange="handleFileUpload(event)">
+
+  <!-- Audio for notifications -->
+  <audio id="notificationSound" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+D2pmcdBzCB0fPQfzEJHGGu7+SIUQ0PU6Hi9KtkGgY8kdjwyXoqCSF+zO/eizAKHWq+8OKWWQwRdsnq7YpECBFKkt/3pGEcCDOF0fPJaikJHWGu7+OIUg0PU6rg9KpVEw" type="audio/wav">
+  </audio>
+
+  <script src="script.js"></script>
+</body>
+</html>

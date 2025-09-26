@@ -1,0 +1,75 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/.4b646107d947e995855bfc344b431d9fdea4f23a-audit.json",
+    "files": [
+        {
+            "date": 1758549573729,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-22.log",
+            "hash": "1dc1977690ea43389741c2fe836ca937a5196608ca063ee3314c13b48403f546"
+        },
+        {
+            "date": 1758603436952,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-23.log",
+            "hash": "fb5315f5626f92bbd39abf98471957af6dce6f2d3220a5886312bbf569b9c90f"
+        },
+        {
+            "date": 1758603441286,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-23.log.1",
+            "hash": "5990df107437c002706cf60354d76f5a8490a6f3574b6d9e2f297b965c678c7f"
+        },
+        {
+            "date": 1758603445096,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-23.log.2",
+            "hash": "fae5d0d2fee5d84ce9cc9690a363bc374fda24740eda8489f97108bff2923ef7"
+        },
+        {
+            "date": 1758603448964,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-23.log.3",
+            "hash": "73e190d9d3c4cca2c220f85fd13051660646837d7bd4bb5eee6231790edf8a4b"
+        },
+        {
+            "date": 1758701082222,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-24.log",
+            "hash": "a44a3c0792ad7edb6e2e14848e9f7124329763a48205d294898dc1c203b11bc7"
+        },
+        {
+            "date": 1758709561314,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-24.log.1",
+            "hash": "ca9b85e658bc9f1baee2982a43c3eca0764107e04a09460306ffe4a436357557"
+        },
+        {
+            "date": 1758709565079,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-24.log.2",
+            "hash": "33546ed8efea35e7168f24c05eb4d9cc31b7145790afa5e1907abab7a8fdd448"
+        },
+        {
+            "date": 1758709568942,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-24.log.3",
+            "hash": "3c96187d6a98a17313b7fedb3c5d2a1151e238e4383f42db63b43752ca42fd99"
+        },
+        {
+            "date": 1758889045426,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-26.log",
+            "hash": "72d9ee5ae17e66b22deda3e82ea07fe88869f5edb9f170c918c3d7f2e50c5ab4"
+        },
+        {
+            "date": 1758900223912,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-26.log.1",
+            "hash": "6ce6416921cb768a41756122b65fc313eade032678246645f6ef1986b69b154f"
+        },
+        {
+            "date": 1758900229100,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-26.log.2",
+            "hash": "58480b9be69c1ddf01d2cffcb76be1fe6d0378e63fd1fbeecafa1e08aa4796cd"
+        },
+        {
+            "date": 1758900234183,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-26.log.3",
+            "hash": "a7b4c1678164d82991acbb725342b3316eb680c240e22171aa56bab2e5a0b769"
+        }
+    ],
+    "hashType": "sha256"
+}
