@@ -6,7 +6,11 @@ set -o errexit
 echo "Installing dependencies..."
 npm install
 
-# Build the application (if needed)
+# Ensure webpack-cli is installed globally for the build process
+echo "Installing webpack-cli globally..."
+npm install -g webpack-cli
+
+# Build the application
 echo "Building the application..."
 npm run build
 
