@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: calm-jee
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: calm-jee-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+databases:
+  - name: calm-jee-db
+    databaseName: calmjee
+    user: calmjee_user
+    plan: free
+    ipAllowList:
+      - ip: 0.0.0.0/0
+        description: Allow all IPs (for demo purposes; restrict in production)

@@ -5,8 +5,9 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
+    "start": "NODE_ENV=production node server.js",
     "dev": "nodemon server.js",
+    "production": "npm run build && npm start",
     "build": "npm run build:client",
     "build:client": "webpack --mode=production",
     "test": "jest",
