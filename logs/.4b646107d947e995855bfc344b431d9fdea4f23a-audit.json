@@ -69,6 +69,11 @@
             "date": 1758900234183,
             "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-26.log.3",
             "hash": "a7b4c1678164d82991acbb725342b3316eb680c240e22171aa56bab2e5a0b769"
+        },
+        {
+            "date": 1758912703310,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/error-2025-09-27.log",
+            "hash": "8d8c65f67472f13af18da654cb260472a96248f1670b83711255fd61ddf022ef"
         }
     ],
     "hashType": "sha256"

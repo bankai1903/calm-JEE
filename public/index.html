@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StudyBuddy AI - Enhanced Learning Platform</title>
+  <title>ChaseJEE - Enhanced Learning Platform</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.0.0/math.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.js" onerror="this.src='/libs/socket.io.js'"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js" onerror="this.src='/libs/chart.min.js'"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.0.0/math.min.js" onerror="this.src='/libs/math.min.js'"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js" onerror="console.warn('MathJax failed to load from CDN')"></script>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#6366f1">
 </head>
@@ -21,8 +21,8 @@
     <!-- Sidebar Navigation -->
     <nav class="sidebar">
       <div class="logo-section">
-        <div class="logo">🧠</div>
-        <div class="logo-text">StudyBuddy</div>
+        <div class="logo">🎯</div>
+        <div class="logo-text">ChaseJEE</div>
       </div>
       
       <ul class="nav-menu">
@@ -33,27 +33,21 @@
           </a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link" data-section="history">
-            <i class="fas fa-history"></i>
-            <span>Chat History</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="#" class="nav-link" data-section="dashboard">
-            <i class="fas fa-chart-line"></i>
-            <span>Dashboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
           <a href="#" class="nav-link" data-section="quiz">
             <i class="fas fa-brain"></i>
             <span>Quizzes</span>
           </a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link" data-section="achievements">
-            <i class="fas fa-trophy"></i>
-            <span>Achievements</span>
+          <a href="#" class="nav-link" data-section="previous-questions">
+            <i class="fas fa-file-alt"></i>
+            <span>Previous Year Questions</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-section="books">
+            <i class="fas fa-book"></i>
+            <span>Books Database</span>
           </a>
         </li>
         <li class="nav-item">
@@ -63,9 +57,15 @@
           </a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link" data-section="progress">
-            <i class="fas fa-graduation-cap"></i>
-            <span>Progress</span>
+          <a href="#" class="nav-link" data-section="study-analytics">
+            <i class="fas fa-chart-line"></i>
+            <span>Study Analytics</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-section="relaxation-game">
+            <i class="fas fa-gamepad"></i>
+            <span>Relaxation Game</span>
           </a>
         </li>
         <li class="nav-item">
@@ -84,19 +84,15 @@
             <p><span class="level-badge"><i class="fas fa-star"></i> Level <span id="userLevel">1</span></span></p>
           </div>
         </div>
-        <button class="btn btn-secondary" onclick="logout()" style="width: 100%; margin-top: 12px;">
-          <i class="fas fa-sign-out-alt"></i> Logout
-        </button>
       </div>
     </nav>
 
-    <!-- Main Content -->
     <main class="main-content">
       <!-- Header -->
       <header class="app-header">
         <h1 class="header-title" id="pageTitle">
           <i class="fas fa-comments"></i>
-          AI Study Assistant
+          <span id="pageTitleText">ChaseJEE AI Assistant</span>
         </h1>
         <div class="header-actions">
           <div class="status-indicator">
@@ -106,6 +102,17 @@
           <button class="theme-toggle" onclick="toggleTheme()">
             <i class="fas fa-moon" id="themeIcon"></i>
           </button>
+          <div class="menu-dropdown">
+            <button class="menu-toggle" onclick="toggleMenu()">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <div class="dropdown-content" id="menuDropdown">
+              <a href="#" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+              </a>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -114,9 +121,9 @@
         <div class="chat-interface">
           <div class="chat-messages" id="chatMessages">
             <div class="welcome-section">
-              <span class="welcome-emoji">🎓</span>
-              <h2 class="welcome-title">Welcome to StudyBuddy AI!</h2>
-              <p class="welcome-subtitle">Your intelligent study companion is ready to help you learn</p>
+              <span class="welcome-emoji">🎯</span>
+              <h2 class="welcome-title">Welcome to ChaseJEE!</h2>
+              <p class="welcome-subtitle">Your intelligent JEE preparation companion is ready to help you succeed</p>
               
               <div class="quick-actions">
                 <div class="quick-action" onclick="quickQuestion('Explain quantum physics basics')">
@@ -416,6 +423,367 @@
         </div>
       </section>
 
+      <!-- Study Analytics Section -->
+      <section class="content-section" data-section="study-analytics">
+        <h3 class="section-title">
+          <i class="fas fa-chart-line"></i>
+          Study Analytics & Performance Insights
+        </h3>
+        
+        <!-- Analytics Overview Cards -->
+        <div class="analytics-overview">
+          <div class="analytics-card">
+            <div class="card-icon">📊</div>
+            <div class="card-content">
+              <h4>Total Study Time</h4>
+              <div class="metric-value" id="totalStudyTimeMetric">0h 0m</div>
+              <div class="metric-change" id="studyTimeChange">+0% from last week</div>
+            </div>
+          </div>
+          
+          <div class="analytics-card">
+            <div class="card-icon">🎯</div>
+            <div class="card-content">
+              <h4>Quiz Accuracy</h4>
+              <div class="metric-value" id="quizAccuracyMetric">0%</div>
+              <div class="metric-change" id="accuracyChange">+0% improvement</div>
+            </div>
+          </div>
+          
+          <div class="analytics-card">
+            <div class="card-icon">🔥</div>
+            <div class="card-content">
+              <h4>Study Streak</h4>
+              <div class="metric-value" id="studyStreakMetric">0 days</div>
+              <div class="metric-change" id="streakChange">Current streak</div>
+            </div>
+          </div>
+          
+          <div class="analytics-card">
+            <div class="card-icon">📈</div>
+            <div class="card-content">
+              <h4>Weekly Progress</h4>
+              <div class="metric-value" id="weeklyProgressMetric">0%</div>
+              <div class="metric-change" id="progressChange">Goal completion</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Study Pattern Analysis -->
+        <div class="analytics-section">
+          <h4 class="section-subtitle">
+            <i class="fas fa-clock"></i>
+            Study Pattern Analysis
+          </h4>
+          
+          <div class="analytics-grid">
+            <div class="analytics-panel">
+              <h5>Daily Study Hours</h5>
+              <canvas id="dailyStudyChart" width="400" height="200"></canvas>
+            </div>
+            
+            <div class="analytics-panel">
+              <h5>Subject Distribution</h5>
+              <canvas id="subjectDistributionChart" width="400" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="analytics-section">
+          <h4 class="section-subtitle">
+            <i class="fas fa-trophy"></i>
+            Performance Metrics
+          </h4>
+          
+          <div class="performance-grid">
+            <div class="performance-card">
+              <h5>Quiz Performance by Subject</h5>
+              <div class="subject-performance" id="subjectPerformance">
+                <div class="subject-item">
+                  <span class="subject-name">Mathematics</span>
+                  <div class="performance-bar">
+                    <div class="performance-fill" style="width: 0%"></div>
+                  </div>
+                  <span class="performance-score">0%</span>
+                </div>
+                <div class="subject-item">
+                  <span class="subject-name">Physics</span>
+                  <div class="performance-bar">
+                    <div class="performance-fill" style="width: 0%"></div>
+                  </div>
+                  <span class="performance-score">0%</span>
+                </div>
+                <div class="subject-item">
+                  <span class="subject-name">Chemistry</span>
+                  <div class="performance-bar">
+                    <div class="performance-fill" style="width: 0%"></div>
+                  </div>
+                  <span class="performance-score">0%</span>
+                </div>
+                <div class="subject-item">
+                  <span class="subject-name">Biology</span>
+                  <div class="performance-bar">
+                    <div class="performance-fill" style="width: 0%"></div>
+                  </div>
+                  <span class="performance-score">0%</span>
+                </div>
+                <div class="subject-item">
+                  <span class="subject-name">Computer Science</span>
+                  <div class="performance-bar">
+                    <div class="performance-fill" style="width: 0%"></div>
+                  </div>
+                  <span class="performance-score">0%</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="performance-card">
+              <h5>Study Goals Progress</h5>
+              <div class="goals-progress" id="goalsProgress">
+                <div class="goal-item">
+                  <div class="goal-info">
+                    <span class="goal-title">Daily Study Target</span>
+                    <span class="goal-status">2h / 4h</span>
+                  </div>
+                  <div class="goal-progress-bar">
+                    <div class="goal-progress-fill" style="width: 50%"></div>
+                  </div>
+                </div>
+                <div class="goal-item">
+                  <div class="goal-info">
+                    <span class="goal-title">Weekly Quiz Target</span>
+                    <span class="goal-status">3 / 5</span>
+                  </div>
+                  <div class="goal-progress-bar">
+                    <div class="goal-progress-fill" style="width: 60%"></div>
+                  </div>
+                </div>
+                <div class="goal-item">
+                  <div class="goal-info">
+                    <span class="goal-title">Monthly Accuracy Goal</span>
+                    <span class="goal-status">78% / 85%</span>
+                  </div>
+                  <div class="goal-progress-bar">
+                    <div class="goal-progress-fill" style="width: 92%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Study Recommendations -->
+        <div class="analytics-section">
+          <h4 class="section-subtitle">
+            <i class="fas fa-lightbulb"></i>
+            AI-Powered Study Recommendations
+          </h4>
+          
+          <div class="recommendations-grid">
+            <div class="recommendation-card priority-high">
+              <div class="recommendation-header">
+                <span class="priority-badge high">High Priority</span>
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <h5>Focus on Physics</h5>
+              <p>Your physics quiz accuracy (65%) is below your average. Consider spending 30 more minutes daily on physics concepts.</p>
+              <div class="recommendation-actions">
+                <button class="btn-small" onclick="focusOnSubject('physics')">Start Physics Session</button>
+                <button class="btn-small secondary" onclick="getPhysicsResources()">Get Resources</button>
+              </div>
+            </div>
+            
+            <div class="recommendation-card priority-medium">
+              <div class="recommendation-header">
+                <span class="priority-badge medium">Medium Priority</span>
+                <i class="fas fa-info-circle"></i>
+              </div>
+              <h5>Optimize Study Schedule</h5>
+              <p>You study most effectively between 6-8 PM. Consider scheduling challenging topics during this time.</p>
+              <div class="recommendation-actions">
+                <button class="btn-small" onclick="optimizeSchedule()">Optimize Schedule</button>
+              </div>
+            </div>
+            
+            <div class="recommendation-card priority-low">
+              <div class="recommendation-header">
+                <span class="priority-badge low">Suggestion</span>
+                <i class="fas fa-star"></i>
+              </div>
+              <h5>Maintain Chemistry Streak</h5>
+              <p>Excellent work in chemistry! You've maintained 85% accuracy. Keep up the momentum with regular practice.</p>
+              <div class="recommendation-actions">
+                <button class="btn-small" onclick="continueChemistry()">Continue Chemistry</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Analytics -->
+        <div class="analytics-section">
+          <h4 class="section-subtitle">
+            <i class="fas fa-microscope"></i>
+            Detailed Study Analysis
+          </h4>
+          
+          <div class="detailed-analytics">
+            <div class="analytics-tabs">
+              <button class="tab-btn active" onclick="showAnalyticsTab('weekly')">Weekly View</button>
+              <button class="tab-btn" onclick="showAnalyticsTab('monthly')">Monthly View</button>
+              <button class="tab-btn" onclick="showAnalyticsTab('yearly')">Yearly View</button>
+            </div>
+            
+            <div class="tab-content active" id="weeklyTab">
+              <div class="analytics-chart-container">
+                <canvas id="weeklyAnalyticsChart" width="800" height="300"></canvas>
+              </div>
+              
+              <div class="analytics-insights">
+                <h6>Weekly Insights</h6>
+                <ul id="weeklyInsights">
+                  <li>📈 Study time increased by 15% compared to last week</li>
+                  <li>🎯 Best performance day: Wednesday (92% quiz accuracy)</li>
+                  <li>⏰ Most productive time: 7:00 PM - 9:00 PM</li>
+                  <li>📚 Most studied subject: Mathematics (45% of total time)</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="tab-content" id="monthlyTab">
+              <div class="analytics-chart-container">
+                <canvas id="monthlyAnalyticsChart" width="800" height="300"></canvas>
+              </div>
+              
+              <div class="analytics-insights">
+                <h6>Monthly Insights</h6>
+                <ul id="monthlyInsights">
+                  <li>📊 Average daily study time: 3.2 hours</li>
+                  <li>🏆 Completed 85% of monthly goals</li>
+                  <li>📈 Overall accuracy improved by 8%</li>
+                  <li>🔥 Longest study streak: 12 days</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="tab-content" id="yearlyTab">
+              <div class="analytics-chart-container">
+                <canvas id="yearlyAnalyticsChart" width="800" height="300"></canvas>
+              </div>
+              
+              <div class="analytics-insights">
+                <h6>Yearly Progress</h6>
+                <ul id="yearlyInsights">
+                  <li>🎓 Total study hours: 1,245 hours</li>
+                  <li>📝 Quizzes completed: 342</li>
+                  <li>🎯 Average accuracy: 82%</li>
+                  <li>🏅 JEE readiness score: 78/100</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export and Settings -->
+        <div class="analytics-actions">
+          <button class="btn" onclick="exportAnalytics()">
+            <i class="fas fa-download"></i>
+            Export Analytics Report
+          </button>
+          <button class="btn btn-secondary" onclick="resetAnalytics()">
+            <i class="fas fa-refresh"></i>
+            Reset Analytics
+          </button>
+          <button class="btn btn-secondary" onclick="setStudyGoals()">
+            <i class="fas fa-target"></i>
+            Set Study Goals
+          </button>
+        </div>
+      </section>
+
+      <!-- Relaxation Game Section -->
+      <section class="content-section" data-section="relaxation-game">
+        <h3 class="section-title">
+          <i class="fas fa-gamepad"></i>
+          Study Break Game - Number Puzzle 2048
+        </h3>
+        
+        <div class="game-container">
+          <!-- Game Status Bar -->
+          <div class="game-status">
+            <div class="game-info">
+              <div class="score-container">
+                <div class="score-label">Score</div>
+                <div class="score" id="gameScore">0</div>
+              </div>
+              <div class="best-container">
+                <div class="best-label">Best</div>
+                <div class="best" id="gameBest">0</div>
+              </div>
+            </div>
+            <div class="game-timer">
+              <div class="timer-label">Play Time</div>
+              <div class="timer-display" id="gameTimer">00:00</div>
+            </div>
+          </div>
+
+          <!-- Game Controls -->
+          <div class="game-controls">
+            <button class="game-btn start-btn" id="startGameBtn" onclick="startRelaxationGame()">
+              <i class="fas fa-play"></i> Start Game
+            </button>
+            <button class="game-btn restart-btn" id="restartGameBtn" onclick="restartGame()" style="display: none;">
+              <i class="fas fa-redo"></i> New Game
+            </button>
+            <button class="game-btn stop-btn" id="stopGameBtn" onclick="stopGame()" style="display: none;">
+              <i class="fas fa-stop"></i> Stop Game
+            </button>
+          </div>
+
+          <!-- Game Board -->
+          <div class="game-board-container" id="gameBoardContainer" style="display: none;">
+            <div class="game-board" id="gameBoard">
+              <!-- 4x4 grid will be generated here -->
+            </div>
+            <div class="game-instructions">
+              <p><strong>How to play:</strong> Use arrow keys or swipe to move tiles. Combine tiles with the same number to reach 2048!</p>
+              <p><strong>Study Break Rule:</strong> Maximum 10 minutes of play time, then 45-minute cooldown.</p>
+            </div>
+          </div>
+
+          <!-- Game Messages -->
+          <div class="game-message" id="gameMessage" style="display: none;">
+            <div class="message-content">
+              <h3 id="messageTitle">Game Over</h3>
+              <p id="messageText">Time's up! Take a break and get back to studying.</p>
+              <button class="game-btn" onclick="closeGameMessage()">OK</button>
+            </div>
+          </div>
+
+          <!-- Cooldown Notice -->
+          <div class="cooldown-notice" id="cooldownNotice" style="display: none;">
+            <div class="cooldown-content">
+              <div class="cooldown-icon">⏰</div>
+              <h3>Study Break Cooldown</h3>
+              <p>You've had your relaxation time! Focus on studying now.</p>
+              <div class="cooldown-timer">
+                <span>Next game available in: </span>
+                <span id="cooldownTimer">45:00</span>
+              </div>
+              <div class="study-suggestions">
+                <h4>💡 Study Suggestions:</h4>
+                <ul>
+                  <li>Review your notes from the last session</li>
+                  <li>Practice some JEE problems</li>
+                  <li>Take a short walk or stretch</li>
+                  <li>Drink water and stay hydrated</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Progress Section -->
       <section class="content-section" data-section="progress">
         <h3 class="section-title">
@@ -444,49 +812,184 @@
         </div>
       </section>
 
-      <!-- Profile Section -->
-      <section class="content-section" data-section="profile">
+      <!-- Previous Year Questions Section -->
+      <section class="content-section" data-section="previous-questions">
         <h3 class="section-title">
-          <i class="fas fa-user"></i>
-          Profile Settings
+          <i class="fas fa-file-alt"></i>
+          Previous Year Questions
         </h3>
         
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="user-avatar" style="font-size: 48px; width: 80px; height: 80px; margin: 0 auto 16px;">
-              <span id="profileAvatar">A</span>
-            </div>
-            <div class="stat-label" style="margin-bottom: 8px;">
-              <span id="profileName">Anonymous User</span>
-            </div>
-            <div class="level-badge">
-              <i class="fas fa-star"></i> Level <span id="profileLevel">1</span>
-            </div>
+        <div class="filters-section">
+          <div class="filter-row">
+            <select id="questionSubjectFilter" class="filter-select">
+              <option value="">All Subjects</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Physics">Physics</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Biology">Biology</option>
+              <option value="English">English</option>
+              <option value="History">History</option>
+            </select>
+            <select id="questionYearFilter" class="filter-select">
+              <option value="">All Years</option>
+              <option value="2024">2024</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
+              <option value="2021">2021</option>
+              <option value="2020">2020</option>
+            </select>
+            <select id="questionGradeFilter" class="filter-select">
+              <option value="">All Grades</option>
+              <option value="10">Grade 10</option>
+              <option value="11">Grade 11</option>
+              <option value="12">Grade 12</option>
+              <option value="undergraduate">Undergraduate</option>
+            </select>
+            <button class="btn btn-primary" onclick="searchQuestions()">
+              <i class="fas fa-search"></i> Search
+            </button>
+          </div>
+          <div class="filter-row">
+            <input type="text" id="questionSearchInput" placeholder="Search questions..." class="search-input">
+            <button class="btn btn-secondary" onclick="addNewQuestion()">
+              <i class="fas fa-plus"></i> Add Question Paper
+            </button>
           </div>
         </div>
 
-        <div style="margin-top: 32px;">
-          <h4 style="color: white; margin-bottom: 16px;">Study Preferences</h4>
-          <div class="quick-actions">
-            <div class="quick-action">
-              <span class="quick-action-icon">🎯</span>
-              <div class="quick-action-title">Learning Goals</div>
-              <div class="quick-action-desc">Set your study objectives</div>
+        <div class="questions-grid" id="questionsGrid">
+          <div class="loading-spinner" id="questionsLoading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Loading questions...</span>
+          </div>
+        </div>
+
+        <div class="pagination" id="questionsPagination"></div>
+      </section>
+
+      <!-- Books Database Section -->
+      <section class="content-section" data-section="books">
+        <h3 class="section-title">
+          <i class="fas fa-book"></i>
+          Books Database
+        </h3>
+        
+        <div class="filters-section">
+          <div class="filter-row">
+            <select id="bookSubjectFilter" class="filter-select">
+              <option value="">All Subjects</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Physics">Physics</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Biology">Biology</option>
+              <option value="English">English</option>
+              <option value="History">History</option>
+            </select>
+            <select id="bookGradeFilter" class="filter-select">
+              <option value="">All Grades</option>
+              <option value="10">Grade 10</option>
+              <option value="11">Grade 11</option>
+              <option value="12">Grade 12</option>
+              <option value="undergraduate">Undergraduate</option>
+            </select>
+            <select id="bookTypeFilter" class="filter-select">
+              <option value="">All Types</option>
+              <option value="textbook">Textbook</option>
+              <option value="reference">Reference</option>
+              <option value="workbook">Workbook</option>
+              <option value="guide">Guide</option>
+              <option value="solved_papers">Solved Papers</option>
+            </select>
+            <select id="bookSortFilter" class="filter-select">
+              <option value="title">Sort by Title</option>
+              <option value="rating">Sort by Rating</option>
+              <option value="views">Sort by Views</option>
+              <option value="newest">Sort by Newest</option>
+            </select>
+          </div>
+          <div class="filter-row">
+            <input type="text" id="bookSearchInput" placeholder="Search books, authors..." class="search-input">
+            <button class="btn btn-primary" onclick="searchBooks()">
+              <i class="fas fa-search"></i> Search
+            </button>
+            <button class="btn btn-secondary" onclick="addNewBook()">
+              <i class="fas fa-plus"></i> Add Book
+            </button>
+          </div>
+        </div>
+
+        <div class="books-grid" id="booksGrid">
+          <div class="loading-spinner" id="booksLoading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Loading books...</span>
+          </div>
+        </div>
+
+        <div class="pagination" id="booksPagination"></div>
+      </section>
+
+      <!-- Profile Section -->
+      <section class="content-section profile-section" data-section="profile">
+        <div class="profile-container">
+          <!-- Profile Header -->
+          <div class="profile-header">
+            <div class="profile-avatar">
+              <span id="profileAvatar">A</span>
             </div>
-            <div class="quick-action">
-              <span class="quick-action-icon">📊</span>
-              <div class="quick-action-title">Progress Reports</div>
-              <div class="quick-action-desc">View detailed analytics</div>
+            <div class="profile-info">
+              <h2 id="profileName">Anonymous User</h2>
+              <div class="level-badge">
+                <i class="fas fa-star"></i> Level <span id="profileLevel">1</span>
+              </div>
             </div>
-            <div class="quick-action">
-              <span class="quick-action-icon">🔔</span>
-              <div class="quick-action-title">Notifications</div>
-              <div class="quick-action-desc">Manage study reminders</div>
+          </div>
+
+          <!-- Profile Grid -->
+          <div class="profile-grid">
+            <!-- Profile Sections -->
+            <div class="profile-card">
+              <h4><i class="fas fa-user-circle"></i> Profile Sections</h4>
+              <div class="profile-actions">
+                <div class="profile-action" onclick="showSection('history')">
+                  <i class="fas fa-history"></i>
+                  <span>Chat History</span>
+                </div>
+                <div class="profile-action" onclick="showSection('dashboard')">
+                  <i class="fas fa-chart-line"></i>
+                  <span>Dashboard</span>
+                </div>
+                <div class="profile-action" onclick="showSection('achievements')">
+                  <i class="fas fa-trophy"></i>
+                  <span>Achievements</span>
+                </div>
+                <div class="profile-action" onclick="showSection('progress')">
+                  <i class="fas fa-graduation-cap"></i>
+                  <span>Progress</span>
+                </div>
+              </div>
             </div>
-            <div class="quick-action" onclick="exportUserData()">
-              <span class="quick-action-icon">💾</span>
-              <div class="quick-action-title">Export Data</div>
-              <div class="quick-action-desc">Download your progress</div>
+
+            <!-- Settings & Data -->
+            <div class="profile-card">
+              <h4><i class="fas fa-cog"></i> Settings & Data</h4>
+              <div class="profile-actions">
+                <div class="profile-action">
+                  <i class="fas fa-target"></i>
+                  <span>Learning Goals</span>
+                </div>
+                <div class="profile-action">
+                  <i class="fas fa-bell"></i>
+                  <span>Notifications</span>
+                </div>
+                <div class="profile-action" onclick="exportUserData()">
+                  <i class="fas fa-download"></i>
+                  <span>Export Data</span>
+                </div>
+                <div class="profile-action">
+                  <i class="fas fa-palette"></i>
+                  <span>Preferences</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

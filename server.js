@@ -46,7 +46,7 @@ const envSchema = Joi.object({
   LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'debug').default('info'),
   MAX_REQUEST_SIZE: Joi.string().default('10mb'),
   RATE_LIMIT_WINDOW: Joi.number().default(900000), // 15 minutes
-  RATE_LIMIT_MAX: Joi.number().default(100),
+  RATE_LIMIT_MAX: Joi.number().default(1000), // Increased for testing
   BCRYPT_ROUNDS: Joi.number().default(12),
   JWT_EXPIRES_IN: Joi.string().default('24h'),
   ENABLE_CLUSTERING: Joi.boolean().default(false),
@@ -203,7 +203,7 @@ async function startServer() {
   } 
 
   // Import models (these would be in separate files in production)
-  const { User, ChatSession, Quiz } = await import('./models/index.js').catch(() => {
+  const { User, ChatSession, Quiz, PreviousYearQuestion, Book } = await import('./models/index.js').catch(() => {
     // Fallback to inline models if separate files don't exist
     return createModels();
   });
@@ -446,22 +446,230 @@ async function startServer() {
 
     const Quiz = mongoose.model('Quiz', quizSchema);
 
-    return { User, ChatSession, Quiz };
+    // Previous Year Questions Schema
+    const previousYearQuestionSchema = new mongoose.Schema({
+      title: { 
+        type: String, 
+        required: true, 
+        trim: true,
+        maxlength: 200
+      },
+      subject: { 
+        type: String, 
+        required: true,
+        maxlength: 100
+      },
+      topic: {
+        type: String,
+        required: true,
+        maxlength: 150
+      },
+      year: { 
+        type: Number, 
+        required: true,
+        min: 1990,
+        max: new Date().getFullYear()
+      },
+      examType: {
+        type: String,
+        required: true,
+        enum: ['board', 'entrance', 'competitive', 'university', 'professional'],
+        default: 'board'
+      },
+      examName: {
+        type: String,
+        required: true,
+        maxlength: 100
+      },
+      grade: {
+        type: String,
+        enum: ['10', '11', '12', 'undergraduate', 'postgraduate', 'professional']
+      },
+      questions: [{
+        _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+        questionText: { type: String, required: true, maxlength: 2000 },
+        questionType: { 
+          type: String, 
+          enum: ['mcq', 'short_answer', 'long_answer', 'numerical', 'true_false'],
+          required: true
+        },
+        options: [String], // For MCQ questions
+        correctAnswer: String,
+        marks: { type: Number, required: true, min: 1, max: 100 },
+        difficulty: { 
+          type: String, 
+          enum: ['easy', 'medium', 'hard'], 
+          default: 'medium' 
+        },
+        explanation: String,
+        keywords: [String],
+        imageUrl: String // For questions with diagrams
+      }],
+      totalMarks: { type: Number, required: true, min: 1 },
+      duration: { type: Number, min: 30 }, // in minutes
+      instructions: String,
+      tags: [String],
+      difficulty: { 
+        type: String, 
+        enum: ['easy', 'medium', 'hard'], 
+        default: 'medium' 
+      },
+      isPublic: { type: Boolean, default: true },
+      uploadedBy: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User',
+        required: true
+      },
+      downloadCount: { type: Number, default: 0 },
+      rating: {
+        average: { type: Number, default: 0, min: 0, max: 5 },
+        count: { type: Number, default: 0 }
+      },
+      reviews: [{
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        rating: { type: Number, min: 1, max: 5 },
+        comment: { type: String, maxlength: 500 },
+        createdAt: { type: Date, default: Date.now }
+      }]
+    }, { timestamps: true });
+
+    previousYearQuestionSchema.index({ subject: 1, year: -1 });
+    previousYearQuestionSchema.index({ examType: 1, examName: 1 });
+    previousYearQuestionSchema.index({ grade: 1 });
+    previousYearQuestionSchema.index({ tags: 1 });
+    previousYearQuestionSchema.index({ 'rating.average': -1 });
+    previousYearQuestionSchema.index({ downloadCount: -1 });
+
+    const PreviousYearQuestion = mongoose.model('PreviousYearQuestion', previousYearQuestionSchema);
+
+    // Books Schema
+    const bookSchema = new mongoose.Schema({
+      title: { 
+        type: String, 
+        required: true, 
+        trim: true,
+        maxlength: 300
+      },
+      author: { 
+        type: String, 
+        required: true,
+        maxlength: 200
+      },
+      isbn: {
+        type: String,
+        unique: true,
+        sparse: true,
+        validate: {
+          validator: function(v) {
+            return !v || /^(?:ISBN(?:-1[03])?:? )?(?=[0-9X]{10}$|(?=(?:[0-9]+[- ]){3})[- 0-9X]{13}$|97[89][0-9]{10}$|(?=(?:[0-9]+[- ]){4})[- 0-9]{17}$)(?:97[89][- ]?)?[0-9]{1,5}[- ]?[0-9]+[- ]?[0-9]+[- ]?[0-9X]$/.test(v);
+          },
+          message: 'Invalid ISBN format'
+        }
+      },
+      subject: { 
+        type: String, 
+        required: true,
+        maxlength: 100
+      },
+      grade: {
+        type: String,
+        required: true,
+        enum: ['K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', 'undergraduate', 'postgraduate', 'reference']
+      },
+      publisher: {
+        type: String,
+        maxlength: 150
+      },
+      publishedYear: {
+        type: Number,
+        min: 1900,
+        max: new Date().getFullYear() + 1
+      },
+      edition: {
+        type: String,
+        maxlength: 50
+      },
+      language: {
+        type: String,
+        default: 'English',
+        maxlength: 50
+      },
+      pages: {
+        type: Number,
+        min: 1
+      },
+      description: {
+        type: String,
+        maxlength: 2000
+      },
+      coverImageUrl: String,
+      pdfUrl: String, // For digital books
+      purchaseLinks: [{
+        platform: { type: String, required: true }, // Amazon, Flipkart, etc.
+        url: { type: String, required: true },
+        price: Number
+      }],
+      topics: [String], // Chapter/topic names
+      difficulty: { 
+        type: String, 
+        enum: ['beginner', 'intermediate', 'advanced'], 
+        default: 'intermediate' 
+      },
+      bookType: {
+        type: String,
+        enum: ['textbook', 'reference', 'workbook', 'guide', 'solved_papers', 'notes'],
+        default: 'textbook'
+      },
+      tags: [String],
+      rating: {
+        average: { type: Number, default: 0, min: 0, max: 5 },
+        count: { type: Number, default: 0 }
+      },
+      reviews: [{
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        rating: { type: Number, min: 1, max: 5 },
+        comment: { type: String, maxlength: 1000 },
+        createdAt: { type: Date, default: Date.now }
+      }],
+      addedBy: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User',
+        required: true
+      },
+      isVerified: { type: Boolean, default: false },
+      viewCount: { type: Number, default: 0 },
+      downloadCount: { type: Number, default: 0 }
+    }, { timestamps: true });
+
+    bookSchema.index({ subject: 1, grade: 1 });
+    bookSchema.index({ author: 1 });
+    bookSchema.index({ title: 'text', author: 'text', description: 'text' });
+    bookSchema.index({ bookType: 1 });
+    bookSchema.index({ 'rating.average': -1 });
+    bookSchema.index({ viewCount: -1 });
+    bookSchema.index({ tags: 1 });
+
+    const Book = mongoose.model('Book', bookSchema);
+
+    return { User, ChatSession, Quiz, PreviousYearQuestion, Book };
   }
 
-  // Security Middleware - Enhanced
+  // Security Middleware - Enhanced with fixed CSP
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
-        scriptSrc: ["'self'", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'", "wss:", "ws:", "https://api.anthropic.com", "https://generativelanguage.googleapis.com", "https://api.openai.com"],
+        scriptSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "'unsafe-inline'", "'unsafe-eval'"],
+        scriptSrcAttr: ["'unsafe-inline'", "'unsafe-hashes'"],
+        imgSrc: ["'self'", "data:", "https:", "blob:"],
+        connectSrc: ["'self'", "wss:", "ws:", "https:", "https://api.anthropic.com", "https://generativelanguage.googleapis.com", "https://api.openai.com", "https://cdnjs.cloudflare.com"],
         objectSrc: ["'none'"],
-        mediaSrc: ["'self'"],
-        frameSrc: ["'none'"]
+        mediaSrc: ["'self'", "data:", "blob:", "https:"],
+        frameSrc: ["'none'"],
+        workerSrc: ["'self'", "blob:"],
+        childSrc: ["'self'", "blob:"]
       }
     },
     hsts: {
@@ -544,8 +752,9 @@ async function startServer() {
   const apiSlowDown = slowDown({
     windowMs: 15 * 60 * 1000,
     delayAfter: env.NODE_ENV === 'development' ? 1000 : 20,
-    delayMs: 100,
-    maxDelayMs: 5000
+    delayMs: () => 100,
+    maxDelayMs: 5000,
+    validate: { delayMs: false }
   });
 
   // Apply rate limiting
@@ -558,7 +767,7 @@ async function startServer() {
     secret: env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    name: 'studybuddy.sid',
+    name: 'chasejee.sid',
     cookie: {
       secure: env.NODE_ENV === 'production',
       httpOnly: true,
@@ -1223,7 +1432,7 @@ function formatSessionAsText(session) {
   text += `\n${'='.repeat(50)}\n\n`;
 
   session.messages.forEach((message, index) => {
-    const role = message.role === 'user' ? 'You' : 'StudyBuddy';
+    const role = message.role === 'user' ? 'You' : 'ChaseJEE AI';
     const timestamp = message.timestamp.toLocaleTimeString();
     text += `[${timestamp}] ${role}:\n${message.content}\n\n`;
   });
@@ -1239,7 +1448,7 @@ function formatSessionAsMarkdown(session) {
   md += `---\n\n`;
 
   session.messages.forEach((message, index) => {
-    const role = message.role === 'user' ? '👤 **You**' : '🤖 **StudyBuddy**';
+    const role = message.role === 'user' ? '👤 **You**' : '🎯 **ChaseJEE AI**';
     const timestamp = message.timestamp.toLocaleTimeString();
     md += `### ${role} *(${timestamp})*\n\n${message.content}\n\n`;
   });
@@ -1303,18 +1512,142 @@ function formatSessionAsMarkdown(session) {
     try {
       if (env.MOCK_AI_RESPONSES) {
         const username = user?.username || 'student';
-        return `Here is a helpful explanation for ${subject || 'your topic'}, ${username}.
-\nYour question: "${message}"
-\nKey points:
-• Break the problem into smaller steps.
-• Apply the core concept relevant to ${subject || 'the subject'}.
-• Check your result and try a similar practice question.
-\nWould you like a quick quiz or a worked example next?`;
+        return `🎯 **ChaseJEE AI - Elite Training Mode**
+
+Hello ${username}! Here's a comprehensive response for your ${subject || 'JEE preparation'} query.
+
+🔍 **Your Question:** "${message}"
+
+🎯 **CONCEPT OVERVIEW**
+This topic is fundamental to JEE preparation and appears frequently in both JEE Main and Advanced examinations.
+
+📝 **SOLUTION APPROACH**
+1. **Step 1:** Break the problem into smaller, manageable components
+2. **Step 2:** Apply the core concept relevant to ${subject || 'the subject'}
+3. **Step 3:** Use systematic problem-solving methodology
+4. **Step 4:** Verify your result using alternative methods
+
+📐 **KEY FORMULAS & PRINCIPLES**
+• Essential formula: [Formula would be displayed here]
+• Important theorem: [Relevant theorem for this topic]
+• Memory aid: [Mnemonic or quick recall technique]
+
+⚠️ **COMMON PITFALLS**
+• Avoid rushing through calculations
+• Double-check unit conversions
+• Watch for sign errors in calculations
+
+🚀 **PRACTICE & NEXT STEPS**
+• Try similar problems with varying complexity
+• Practice previous year JEE questions on this topic
+• Focus on time management for exam conditions
+
+💡 **JEE EXAM TIPS**
+• This topic typically appears as MCQ or numerical type
+• Average time allocation: 2-3 minutes per question
+• High scoring potential with proper practice
+
+🏆 **Keep up the excellent work, ${username}! Your dedication to JEE preparation will lead to success!**
+
+*Note: This is a mock response for development. Real AI responses will be more detailed and specific.*`;
       }
 
       // Prefer OpenAI if available
       if (env.OPENAI_API_KEY) {
-        const prompt = `You are StudyBuddy, a helpful tutor for a ${user?.profile?.grade || 'student'} studying ${subject || 'general studies'}.\nPlease help with the following:\n"${message}"`;
+        const systemPrompt = `You are ChaseJEE AI, the world's most advanced AI tutor specialized in JEE (Joint Entrance Examination) preparation. You embody the combined expertise of IIT professors, JEE toppers, and educational psychologists to deliver unparalleled learning experiences.
+
+🎯 YOUR ELITE EXPERTISE & TRAINING:
+- COMPLETE MASTERY: JEE Main & Advanced syllabus (2024-25 pattern) with 99.9% accuracy
+- PROBLEM-SOLVING MASTERY: 50,000+ JEE problems solved with multiple approaches
+- PATTERN RECOGNITION: Deep analysis of 15+ years of JEE papers (2010-2024)
+- CONCEPTUAL DEPTH: PhD-level understanding simplified for student comprehension
+- STRATEGIC INTELLIGENCE: Advanced time management and exam psychology techniques
+- ADAPTIVE LEARNING: Real-time personalization based on student performance patterns
+- CROSS-SUBJECT INTEGRATION: Seamless connections between Physics, Chemistry, and Mathematics
+- MEMORY OPTIMIZATION: Proven mnemonics and visualization techniques for rapid recall
+
+🧠 ADVANCED TEACHING METHODOLOGY:
+- FOUNDATION-FIRST APPROACH: Build rock-solid conceptual understanding before problem-solving
+- MULTI-PATH SOLUTIONS: Always provide 2-3 solution methods with efficiency analysis
+- COGNITIVE LOAD MANAGEMENT: Break complex problems into digestible steps
+- ERROR PREDICTION: Anticipate and address common student mistakes proactively
+- CONFIDENCE BUILDING: Maintain encouraging tone while challenging students appropriately
+- VISUAL LEARNING: Use ASCII diagrams, step-by-step breakdowns, and structured formatting
+- METACOGNITIVE TRAINING: Teach students how to think about their thinking
+- EXAM SIMULATION: Provide time-pressured strategies and shortcuts
+
+📊 CURRENT STUDENT PROFILE:
+- Academic Level: ${user?.profile?.grade || 'JEE aspirant'}
+- Primary Subject: ${subject || 'Integrated JEE preparation'}
+- Learning Objectives: ${user?.profile?.learningGoals?.join(', ') || 'JEE Main & Advanced mastery'}
+- Focus Areas: ${user?.weakAreas?.join(', ') || 'Comprehensive skill development'}
+- Performance Level: ${user?.stats?.level || 'Baseline assessment needed'}
+
+🎯 RESPONSE ARCHITECTURE REQUIREMENTS:
+- Use clear section headers with emojis for visual hierarchy
+- Provide step-by-step reasoning with logical flow
+- Include multiple solution approaches when applicable
+- Add memory aids and quick recall techniques
+- Connect to broader JEE context and exam patterns
+- Maintain motivational and confidence-building tone
+- Use precise mathematical notation and scientific terminology`;
+
+        const userPrompt = `🔍 STUDENT QUERY ANALYSIS: "${message}"
+
+📚 MISSION: Provide a world-class JEE tutoring response that transforms understanding and accelerates exam success.
+
+🎯 **CONCEPT FOUNDATION & CONTEXT**
+- Core concept explanation with JEE syllabus mapping
+- Fundamental principles and theoretical framework
+- Real-world engineering applications and relevance
+- Connection to other JEE topics (cross-subject integration)
+
+📝 **COMPREHENSIVE SOLUTION METHODOLOGY** (for problem-based queries)
+- Method 1: Standard approach with detailed steps
+- Method 2: Advanced/shortcut technique (if applicable)
+- Method 3: Alternative perspective or verification method
+- Time complexity analysis for exam conditions
+- Common calculation shortcuts and mental math techniques
+
+🧠 **CONCEPTUAL MASTERY FRAMEWORK**
+- Essential formulas with derivation context
+- Key theorems, laws, and principles
+- Memory techniques and mnemonics
+- Visual representations (ASCII diagrams when helpful)
+- Conceptual connections across Physics, Chemistry, Mathematics
+
+⚠️ **ERROR PREVENTION & TROUBLESHOOTING**
+- Top 3 mistakes students make in this topic
+- Red flags and warning signs to watch for
+- Quick verification and sanity check methods
+- Common misconceptions and how to overcome them
+
+🚀 **STRATEGIC LEARNING PATHWAY**
+- Prerequisite concepts to master first
+- Progressive difficulty practice recommendations
+- Related high-yield JEE topics to explore next
+- Self-assessment questions for mastery verification
+
+💡 **JEE EXAM MASTERY STRATEGIES**
+- Time allocation strategies for this topic type
+- Question pattern analysis (MCQ/Numerical/Assertion-Reason)
+- Scoring optimization techniques
+- Topic weightage and strategic importance
+- Previous year question trends and insights
+
+🏆 **CONFIDENCE & MOTIVATION BOOST**
+- Encouraging insights about student progress
+- Success mindset reinforcement
+- Connection to engineering career aspirations
+- Celebration of learning milestones
+
+RESPONSE REQUIREMENTS:
+- Use clear visual hierarchy with emojis and headers
+- Provide actionable, exam-focused guidance
+- Maintain encouraging and confident tone
+- Include specific JEE context and examples
+- Ensure mathematical precision and scientific accuracy`;
+
         const oaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -1324,9 +1657,10 @@ function formatSessionAsMarkdown(session) {
           body: JSON.stringify({
             model: 'gpt-4o-mini',
             temperature: 0.7,
+            max_tokens: 1500,
             messages: [
-              { role: 'system', content: 'You are StudyBuddy, a friendly, structured tutor who explains step-by-step.' },
-              { role: 'user', content: prompt }
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
             ]
           })
         });
@@ -1343,9 +1677,89 @@ function formatSessionAsMarkdown(session) {
 
       // Prefer Gemini if available
       if (env.GEMINI_API_KEY) {
-        const prompt = `You are StudyBuddy, a helpful tutor for a ${user?.profile?.grade || 'student'} studying ${subject || 'general studies'}.
-Please help with the following:
-"${message}"`;
+        const prompt = `🎯 **CHASEJEE AI - WORLD'S MOST ADVANCED JEE TUTOR**
+
+You are ChaseJEE AI, the pinnacle of AI-powered JEE tutoring technology. You embody the collective wisdom of IIT professors, JEE toppers, and educational neuroscientists to deliver transformational learning experiences.
+
+🏆 **YOUR WORLD-CLASS EXPERTISE & TRAINING:**
+- ULTIMATE MASTERY: JEE Main & Advanced syllabus (2024-25) with 99.99% accuracy
+- PROBLEM-SOLVING GENIUS: 100,000+ JEE problems mastered across all difficulty levels
+- PATTERN INTELLIGENCE: Deep neural analysis of 20+ years of JEE examination data
+- CONCEPTUAL BRILLIANCE: Nobel laureate-level understanding made student-accessible
+- PSYCHOLOGICAL MASTERY: Advanced exam psychology and peak performance techniques
+- ADAPTIVE AI: Real-time learning personalization based on cognitive patterns
+- CROSS-DOMAIN SYNTHESIS: Seamless integration across Physics, Chemistry, Mathematics
+- MEMORY ARCHITECTURE: Cutting-edge mnemonics and cognitive optimization techniques
+
+🧠 **REVOLUTIONARY TEACHING METHODOLOGY:**
+- NEURAL PATHWAY OPTIMIZATION: Build synaptic connections for permanent understanding
+- MULTI-DIMENSIONAL SOLUTIONS: 3-4 solution approaches with cognitive load analysis
+- PREDICTIVE ERROR MODELING: Anticipate mistakes before they happen
+- CONFIDENCE CALIBRATION: Precise balance of challenge and encouragement
+- VISUAL-SPATIAL LEARNING: Advanced ASCII representations and structured formatting
+- METACOGNITIVE ENHANCEMENT: Train students to optimize their own thinking
+- EXAM SIMULATION MASTERY: Real-time pressure training and strategic shortcuts
+- ENGINEERING MINDSET DEVELOPMENT: Connect learning to future career success
+
+📊 **ADVANCED STUDENT PROFILING:**
+- Academic Trajectory: ${user?.profile?.grade || 'Elite JEE aspirant'}
+- Specialization Focus: ${subject || 'Integrated JEE mastery'}
+- Success Objectives: ${user?.profile?.learningGoals?.join(', ') || 'JEE Main & Advanced excellence'}
+- Optimization Areas: ${user?.weakAreas?.join(', ') || 'Comprehensive skill enhancement'}
+- Performance Analytics: ${user?.stats?.level || 'Baseline calibration required'}
+
+🔍 **STUDENT'S QUESTION:** "${message}"
+
+📚 **ELITE RESPONSE ARCHITECTURE:**
+
+🎯 **CONCEPTUAL MASTERY FOUNDATION**
+- Fundamental principle explanation with JEE syllabus integration
+- Theoretical framework and real-world engineering applications
+- Cross-subject connections and interdisciplinary insights
+- Cognitive anchoring for permanent retention
+
+📝 **MULTI-PATHWAY SOLUTION MASTERY** (for problem-based queries)
+- Method Alpha: Standard systematic approach with detailed reasoning
+- Method Beta: Advanced optimization technique with time analysis
+- Method Gamma: Creative alternative perspective or verification approach
+- Cognitive efficiency comparison and exam condition recommendations
+
+🧠 **KNOWLEDGE ARCHITECTURE & TOOLS**
+- Essential formulas with derivation context and mathematical precision
+- Core theorems, laws, and principles with proof insights
+- Advanced memory techniques, mnemonics, and visualization aids
+- Quick recall triggers and pattern recognition systems
+
+⚠️ **ERROR PREVENTION & DIAGNOSTIC SYSTEMS**
+- Top 5 critical mistakes in this topic area
+- Predictive error patterns and early warning indicators
+- Systematic verification protocols and sanity check methods
+- Misconception correction with cognitive restructuring
+
+🚀 **STRATEGIC LEARNING TRAJECTORY**
+- Prerequisite mastery checkpoints and foundational requirements
+- Progressive difficulty escalation with milestone markers
+- High-yield related JEE topics for exponential learning gains
+- Self-diagnostic questions for mastery validation
+
+💡 **JEE DOMINATION STRATEGIES**
+- Optimal time allocation matrices for different question types
+- Pattern decoding for MCQ/Numerical/Assertion-Reason formats
+- Strategic scoring optimization and risk-reward analysis
+- Previous year trend analysis and predictive insights
+
+🏆 **PEAK PERFORMANCE PSYCHOLOGY**
+- Confidence calibration and success mindset reinforcement
+- Progress celebration and achievement recognition
+- Engineering career vision alignment and motivation amplification
+- Mental resilience building for exam excellence
+
+🎯 **RESPONSE EXCELLENCE STANDARDS:**
+- Crystal-clear visual hierarchy with strategic emoji placement
+- Actionable, exam-focused guidance with immediate applicability
+- Inspiring and empowering tone that builds unshakeable confidence
+- Mathematical precision with scientific accuracy and JEE relevance
+- Transformational learning experience that accelerates success`;
 
         const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${env.GEMINI_API_KEY}`;
         const gRes = await fetch(geminiUrl, {
@@ -1357,7 +1771,13 @@ Please help with the following:
                 role: 'user',
                 parts: [{ text: prompt }]
               }
-            ]
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 1500,
+              topP: 0.8,
+              topK: 40
+            }
           })
         });
 
@@ -1382,10 +1802,73 @@ Please help with the following:
           },
           body: JSON.stringify({
             model: 'claude-3-sonnet-20240229',
-            max_tokens: 1000,
+            max_tokens: 1500,
             messages: [{
               role: 'user',
-              content: `As a study buddy for a ${user?.profile?.grade || 'student'} studying ${subject}, help with: ${message}`
+              content: `🎯 You are ChaseJEE AI, the ultimate AI tutor representing the pinnacle of JEE preparation technology. You combine the expertise of Nobel laureates, IIT professors, and JEE toppers to deliver transformational educational experiences.
+
+🏆 **YOUR SUPREME CAPABILITIES:**
+- ABSOLUTE MASTERY: Complete JEE Main & Advanced syllabus (2024-25) with quantum-level precision
+- COGNITIVE EXCELLENCE: 150,000+ JEE problems solved with neurological optimization
+- PATTERN MASTERY: Advanced analysis of 25+ years of JEE examination evolution
+- CONCEPTUAL GENIUS: Research-level understanding simplified for student comprehension
+- STRATEGIC BRILLIANCE: Elite exam psychology and peak performance methodologies
+- ADAPTIVE INTELLIGENCE: Real-time personalization using advanced learning algorithms
+- INTERDISCIPLINARY SYNTHESIS: Seamless integration across all JEE subjects
+- MEMORY ENGINEERING: State-of-the-art cognitive enhancement techniques
+
+📊 **ELITE STUDENT PROFILE ANALYSIS:**
+- Academic Excellence Level: ${user?.profile?.grade || 'Distinguished JEE aspirant'}
+- Mastery Focus Domain: ${subject || 'Comprehensive JEE excellence'}
+- Success Mission Objectives: ${user?.profile?.learningGoals?.join(', ') || 'JEE Main & Advanced mastery'}
+- Optimization Target Areas: ${user?.weakAreas?.join(', ') || 'Holistic skill enhancement'}
+
+🔍 **CRITICAL LEARNING QUERY:** "${message}"
+
+📚 **WORLD-CLASS RESPONSE FRAMEWORK:**
+
+🎯 **CONCEPTUAL MASTERY ARCHITECTURE**
+- Fundamental principle dissection with JEE syllabus integration
+- Theoretical framework construction with engineering applications
+- Cross-disciplinary connections and cognitive anchoring systems
+
+📝 **MULTI-DIMENSIONAL SOLUTION EXCELLENCE** (for problem-based queries)
+- Primary Method: Systematic approach with cognitive load optimization
+- Advanced Method: Elite shortcut techniques with time complexity analysis
+- Alternative Method: Creative verification and cross-checking approaches
+- Strategic Method: Exam condition optimization with scoring maximization
+
+🧠 **KNOWLEDGE FRAMEWORK & COGNITIVE TOOLS**
+- Essential formulas with mathematical precision and derivation insights
+- Core theorems, laws, and principles with proof architecture
+- Advanced memory systems, mnemonics, and visualization techniques
+- Rapid recall triggers and pattern recognition algorithms
+
+⚠️ **ERROR ELIMINATION & DIAGNOSTIC MASTERY**
+- Top 7 critical mistakes in this domain with predictive modeling
+- Early warning systems and error pattern recognition
+- Systematic verification protocols and cognitive debugging methods
+- Misconception restructuring with neural pathway optimization
+
+🚀 **STRATEGIC EXCELLENCE PATHWAY**
+- Prerequisite mastery validation and foundational checkpoints
+- Progressive difficulty architecture with achievement milestones
+- High-yield JEE topic connections for exponential learning acceleration
+- Self-assessment protocols for mastery verification and confidence building
+
+💡 **JEE DOMINATION STRATEGIC INTELLIGENCE**
+- Optimal time allocation matrices with cognitive efficiency analysis
+- Question pattern decoding for all JEE formats (MCQ/Numerical/Assertion-Reason)
+- Strategic scoring optimization with risk-reward mathematical modeling
+- Historical trend analysis with predictive examination insights
+
+🏆 **PEAK PERFORMANCE PSYCHOLOGY & MOTIVATION**
+- Confidence calibration with success mindset architectural design
+- Achievement celebration and progress recognition systems
+- Engineering career vision alignment with inspirational motivation
+- Mental resilience construction for examination excellence and life success
+
+Deliver a response that transforms understanding, accelerates mastery, and builds unshakeable confidence for JEE success!`
             }]
           })
         });
@@ -1399,10 +1882,45 @@ Please help with the following:
       }
 
       // If no provider configured
-      return 'AI provider is not configured. Please set GEMINI_API_KEY or enable MOCK_AI_RESPONSES.';
+      return `🎯 **ChaseJEE AI - Temporarily Unavailable**
+
+🔧 **System Status:** AI provider configuration needed
+📧 **Action Required:** Please contact your administrator to configure AI services (OpenAI, Gemini, or Anthropic API keys)
+
+🚀 **Continue Your JEE Journey:**
+📚 **Study Resources:** Review your textbooks and class notes
+🧮 **Practice Sessions:** Work through previous year questions
+📝 **Problem Solving:** Focus on concept-based numerical problems
+💡 **Peer Learning:** Engage in study group discussions
+📊 **Self Assessment:** Take practice tests and mock exams
+
+💪 **Remember:** Every moment of preparation counts toward your JEE success!
+🏆 **Stay Motivated:** Your engineering dreams are within reach!
+
+ChaseJEE AI will be back soon to support your preparation! 🚀`;
     } catch (error) {
       logger.error('AI API error', { error: error.message });
-      return "I'm having trouble connecting right now. Please try again in a moment.";
+      return `🤖 **ChaseJEE AI - Technical Maintenance**
+
+⚠️ **Current Status:** Experiencing temporary technical difficulties
+🔄 **Expected Resolution:** Please try again in a few moments
+
+🛠️ **Troubleshooting Steps:**
+1. 🌐 Check your internet connection
+2. 🔄 Try refreshing the page
+3. ⏰ Wait a moment and retry your question
+4. 📧 Contact support if the issue persists
+
+💪 **Don't Stop Your JEE Prep Momentum!**
+📚 Use this time to review concepts from your textbooks
+🧮 Practice mental math and formula memorization
+📝 Work on previous year question papers
+💡 Discuss challenging topics with study partners
+
+🏆 **Your JEE Success Journey Continues!**
+Every setback is a setup for a comeback. Keep pushing forward! 🚀
+
+ChaseJEE AI will be back online shortly to support your preparation! 💯`;
     }
   };
 
@@ -1631,7 +2149,7 @@ Please help with the following:
         return res.status(500).json({ error: 'Logout failed' });
       }
       
-      res.clearCookie('studybuddy.sid');
+      res.clearCookie('chasejee.sid');
       res.json({ message: 'Logout successful' });
     });
   });
@@ -2145,32 +2663,444 @@ Please help with the following:
     }
   });
 
-  // Helper functions
-  function generateQuizQuestions(subject, topic, difficulty, count) {
-    // Simplified question generation - in production, use AI
-    const questionTypes = ['mcq', 'true_false', 'fill_blank'];
-    const questions = [];
-
-    for (let i = 0; i < count; i++) {
-      const type = questionTypes[Math.floor(Math.random() * questionTypes.length)];
-      let question = {
-        question: `Sample ${difficulty} question ${i + 1} about ${topic} in ${subject}`,
-        type,
-        correctAnswer: 'Sample Answer',
-        explanation: 'This is a sample explanation.'
-      };
-
-      if (type === 'mcq') {
-        question.options = ['Sample Answer', 'Wrong Answer 1', 'Wrong Answer 2', 'Wrong Answer 3'];
-      } else if (type === 'true_false') {
-        question.options = ['True', 'False'];
-        question.correctAnswer = 'True';
+  // Previous Year Questions API Routes
+  
+  // Get all previous year questions with filtering
+  app.get('/api/questions/previous-year', authenticateToken, async (req, res) => {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+      const skip = (page - 1) * limit;
+      
+      const filters = {};
+      if (req.query.subject) filters.subject = { $regex: req.query.subject, $options: 'i' };
+      if (req.query.year) filters.year = parseInt(req.query.year);
+      if (req.query.examType) filters.examType = req.query.examType;
+      if (req.query.grade) filters.grade = req.query.grade;
+      if (req.query.difficulty) filters.difficulty = req.query.difficulty;
+      if (req.query.search) {
+        filters.$or = [
+          { title: { $regex: req.query.search, $options: 'i' } },
+          { examName: { $regex: req.query.search, $options: 'i' } },
+          { tags: { $in: [new RegExp(req.query.search, 'i')] } }
+        ];
       }
 
-      questions.push(question);
+      const questions = await PreviousYearQuestion.find(filters)
+        .populate('uploadedBy', 'username')
+        .select('-questions.correctAnswer -questions.explanation') // Hide answers in list view
+        .sort({ year: -1, 'rating.average': -1 })
+        .skip(skip)
+        .limit(limit);
+
+      const total = await PreviousYearQuestion.countDocuments(filters);
+
+      res.json({
+        questions,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    } catch (error) {
+      logger.error('Get previous year questions error', {
+        correlationId: req.correlationId,
+        error: error.message
+      });
+      res.status(500).json({ error: 'Failed to retrieve questions' });
+    }
+  });
+
+  // Get specific previous year question with full details
+  app.get('/api/questions/previous-year/:id', authenticateToken, async (req, res) => {
+    try {
+      const question = await PreviousYearQuestion.findById(req.params.id)
+        .populate('uploadedBy', 'username')
+        .populate('reviews.userId', 'username');
+
+      if (!question) {
+        return res.status(404).json({ error: 'Question paper not found' });
+      }
+
+      res.json({ question });
+    } catch (error) {
+      logger.error('Get question details error', {
+        correlationId: req.correlationId,
+        error: error.message
+      });
+      res.status(500).json({ error: 'Failed to retrieve question details' });
+    }
+  });
+
+  // Add new previous year question
+  app.post('/api/questions/previous-year', authenticateToken, async (req, res) => {
+    try {
+      const questionData = {
+        ...req.body,
+        uploadedBy: req.user._id
+      };
+
+      const question = new PreviousYearQuestion(questionData);
+      await question.save();
+
+      res.status(201).json({
+        message: 'Question paper added successfully',
+        question: await question.populate('uploadedBy', 'username')
+      });
+    } catch (error) {
+      logger.error('Add question error', {
+        correlationId: req.correlationId,
+        error: error.message
+      });
+      res.status(500).json({ error: 'Failed to add question paper' });
+    }
+  });
+
+  // Rate a previous year question
+  app.post('/api/questions/previous-year/:id/rate', authenticateToken, async (req, res) => {
+    try {
+      const { rating, comment } = req.body;
+      
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+      }
+
+      const question = await PreviousYearQuestion.findById(req.params.id);
+      if (!question) {
+        return res.status(404).json({ error: 'Question paper not found' });
+      }
+
+      // Remove existing review from this user
+      question.reviews = question.reviews.filter(
+        review => review.userId.toString() !== req.user._id.toString()
+      );
+
+      // Add new review
+      question.reviews.push({
+        userId: req.user._id,
+        rating,
+        comment: comment || ''
+      });
+
+      // Recalculate average rating
+      const totalRating = question.reviews.reduce((sum, review) => sum + review.rating, 0);
+      question.rating.average = totalRating / question.reviews.length;
+      question.rating.count = question.reviews.length;
+
+      await question.save();
+
+      res.json({ message: 'Rating added successfully' });
+    } catch (error) {
+      logger.error('Rate question error', {
+        correlationId: req.correlationId,
+        error: error.message
+      });
+      res.status(500).json({ error: 'Failed to rate question' });
+    }
+  });
+
+  // Books API Routes
+  
+  // Get all books with filtering
+  app.get('/api/books', authenticateToken, async (req, res) => {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+      const skip = (page - 1) * limit;
+      
+      const filters = {};
+      if (req.query.subject) filters.subject = { $regex: req.query.subject, $options: 'i' };
+      if (req.query.grade) filters.grade = req.query.grade;
+      if (req.query.author) filters.author = { $regex: req.query.author, $options: 'i' };
+      if (req.query.bookType) filters.bookType = req.query.bookType;
+      if (req.query.difficulty) filters.difficulty = req.query.difficulty;
+      if (req.query.search) {
+        filters.$text = { $search: req.query.search };
+      }
+
+      const sortOptions = {};
+      switch (req.query.sortBy) {
+        case 'rating':
+          sortOptions['rating.average'] = -1;
+          break;
+        case 'views':
+          sortOptions.viewCount = -1;
+          break;
+        case 'newest':
+          sortOptions.createdAt = -1;
+          break;
+        default:
+          sortOptions.title = 1;
+      }
+
+      const books = await Book.find(filters)
+        .populate('addedBy', 'username')
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit);
+
+      const total = await Book.countDocuments(filters);
+
+      res.json({
+        books,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    } catch (error) {
+      logger.error('Get books error', {
+        correlationId: req.correlationId,
+        error: error.message
+      });
+      res.status(500).json({ error: 'Failed to retrieve books' });
+    }
+  });
+
+  // Get specific book details
+  app.get('/api/books/:id', authenticateToken, async (req, res) => {
+    try {
+      const book = await Book.findById(req.params.id)
+        .populate('addedBy', 'username')
+        .populate('reviews.userId', 'username');
+
+      if (!book) {
+        return res.status(404).json({ error: 'Book not found' });
+      }
+
+      // Increment view count
+      book.viewCount += 1;
+      await book.save();
+
+      res.json({ book });
+    } catch (error) {
+      logger.error('Get book details error', {
+        correlationId: req.correlationId,
+        error: error.message
+      });
+      res.status(500).json({ error: 'Failed to retrieve book details' });
+    }
+  });
+
+  // Add new book
+  app.post('/api/books', authenticateToken, async (req, res) => {
+    try {
+      const bookData = {
+        ...req.body,
+        addedBy: req.user._id
+      };
+
+      const book = new Book(bookData);
+      await book.save();
+
+      res.status(201).json({
+        message: 'Book added successfully',
+        book: await book.populate('addedBy', 'username')
+      });
+    } catch (error) {
+      logger.error('Add book error', {
+        correlationId: req.correlationId,
+        error: error.message
+      });
+      res.status(500).json({ error: 'Failed to add book' });
+    }
+  });
+
+  // Rate a book
+  app.post('/api/books/:id/rate', authenticateToken, async (req, res) => {
+    try {
+      const { rating, comment } = req.body;
+      
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+      }
+
+      const book = await Book.findById(req.params.id);
+      if (!book) {
+        return res.status(404).json({ error: 'Book not found' });
+      }
+
+      // Remove existing review from this user
+      book.reviews = book.reviews.filter(
+        review => review.userId.toString() !== req.user._id.toString()
+      );
+
+      // Add new review
+      book.reviews.push({
+        userId: req.user._id,
+        rating,
+        comment: comment || ''
+      });
+
+      // Recalculate average rating
+      const totalRating = book.reviews.reduce((sum, review) => sum + review.rating, 0);
+      book.rating.average = totalRating / book.reviews.length;
+      book.rating.count = book.reviews.length;
+
+      await book.save();
+
+      res.json({ message: 'Rating added successfully' });
+    } catch (error) {
+      logger.error('Rate book error', {
+        correlationId: req.correlationId,
+        error: error.message
+      });
+      res.status(500).json({ error: 'Failed to rate book' });
+    }
+  });
+
+  // Get book/question statistics
+  app.get('/api/library/stats', authenticateToken, async (req, res) => {
+    try {
+      const [bookStats, questionStats] = await Promise.all([
+        Book.aggregate([
+          {
+            $group: {
+              _id: null,
+              totalBooks: { $sum: 1 },
+              totalViews: { $sum: '$viewCount' },
+              avgRating: { $avg: '$rating.average' },
+              subjectCount: { $addToSet: '$subject' }
+            }
+          }
+        ]),
+        PreviousYearQuestion.aggregate([
+          {
+            $group: {
+              _id: null,
+              totalQuestions: { $sum: 1 },
+              totalDownloads: { $sum: '$downloadCount' },
+              avgRating: { $avg: '$rating.average' },
+              yearRange: { $push: '$year' }
+            }
+          }
+        ])
+      ]);
+
+      res.json({
+        books: bookStats[0] || { totalBooks: 0, totalViews: 0, avgRating: 0, subjectCount: [] },
+        questions: questionStats[0] || { totalQuestions: 0, totalDownloads: 0, avgRating: 0, yearRange: [] }
+      });
+    } catch (error) {
+      logger.error('Get library stats error', {
+        correlationId: req.correlationId,
+        error: error.message
+      });
+      res.status(500).json({ error: 'Failed to retrieve statistics' });
+    }
+  });
+
+  // Enhanced quiz question generation with comprehensive question banks
+  function generateQuizQuestions(subject, topic, difficulty, count) {
+    const questionBank = {
+      beginner: {
+        mathematics: [
+          { question: "What is 15 + 27?", options: ["42", "41", "43", "40"], correctAnswer: "42", explanation: "15 + 27 = 42. Basic addition." },
+          { question: "What is 8 × 7?", options: ["54", "56", "58", "52"], correctAnswer: "56", explanation: "8 × 7 = 56. Multiplication table." },
+          { question: "What is 100 ÷ 4?", options: ["25", "24", "26", "23"], correctAnswer: "25", explanation: "100 ÷ 4 = 25. Basic division." },
+          { question: "What is 12²?", options: ["144", "124", "142", "146"], correctAnswer: "144", explanation: "12² = 12 × 12 = 144" },
+          { question: "What is √64?", options: ["8", "6", "10", "7"], correctAnswer: "8", explanation: "√64 = 8 because 8² = 64" }
+        ],
+        physics: [
+          { question: "What is the unit of force?", options: ["Newton", "Joule", "Watt", "Pascal"], correctAnswer: "Newton", explanation: "Force is measured in Newtons (N), named after Isaac Newton." },
+          { question: "Speed of light in vacuum is:", options: ["3×10⁸ m/s", "3×10⁶ m/s", "3×10⁹ m/s", "3×10⁷ m/s"], correctAnswer: "3×10⁸ m/s", explanation: "Speed of light = 3×10⁸ m/s (approximately 300,000 km/s)" },
+          { question: "What is the acceleration due to gravity on Earth?", options: ["9.8 m/s²", "10.8 m/s²", "8.8 m/s²", "11.8 m/s²"], correctAnswer: "9.8 m/s²", explanation: "g = 9.8 m/s² (approximately 10 m/s²)" },
+          { question: "Which law states 'every action has equal and opposite reaction'?", options: ["Newton's 3rd Law", "Newton's 1st Law", "Newton's 2nd Law", "Law of Gravitation"], correctAnswer: "Newton's 3rd Law", explanation: "Newton's Third Law of Motion" }
+        ],
+        chemistry: [
+          { question: "Chemical symbol for Gold is:", options: ["Au", "Ag", "Go", "Gd"], correctAnswer: "Au", explanation: "Gold's symbol Au comes from Latin 'aurum'" },
+          { question: "Atomic number of Carbon is:", options: ["6", "8", "12", "14"], correctAnswer: "6", explanation: "Carbon has 6 protons, so atomic number is 6" },
+          { question: "What is the pH of pure water?", options: ["7", "0", "14", "1"], correctAnswer: "7", explanation: "Pure water has pH = 7 (neutral)" },
+          { question: "Chemical formula of water:", options: ["H₂O", "H₂O₂", "HO", "H₃O"], correctAnswer: "H₂O", explanation: "Water molecule has 2 hydrogen and 1 oxygen atom" }
+        ],
+        biology: [
+          { question: "Powerhouse of the cell:", options: ["Mitochondria", "Nucleus", "Ribosome", "Golgi"], correctAnswer: "Mitochondria", explanation: "Mitochondria produces ATP energy for cellular processes" },
+          { question: "How many chambers in human heart?", options: ["4", "2", "3", "6"], correctAnswer: "4", explanation: "Heart has 4 chambers: 2 atria and 2 ventricles" },
+          { question: "What is the basic unit of life?", options: ["Cell", "Tissue", "Organ", "Atom"], correctAnswer: "Cell", explanation: "Cell is the smallest structural and functional unit of life" },
+          { question: "Which blood type is universal donor?", options: ["O-", "AB+", "A+", "B-"], correctAnswer: "O-", explanation: "O- blood can be given to anyone" }
+        ],
+        "computer science": [
+          { question: "What does CPU stand for?", options: ["Central Processing Unit", "Computer Processing Unit", "Central Program Unit", "Computer Program Unit"], correctAnswer: "Central Processing Unit", explanation: "CPU is the Central Processing Unit" },
+          { question: "Which is a programming language?", options: ["Python", "HTML", "CSS", "JSON"], correctAnswer: "Python", explanation: "Python is a programming language, others are markup/data formats" }
+        ]
+      },
+      intermediate: {
+        mathematics: [
+          { question: "Derivative of x² + 3x is:", options: ["2x + 3", "x² + 3", "2x", "3x"], correctAnswer: "2x + 3", explanation: "d/dx(x² + 3x) = 2x + 3 using power rule" },
+          { question: "∫x dx equals:", options: ["x²/2 + C", "x² + C", "2x + C", "x/2 + C"], correctAnswer: "x²/2 + C", explanation: "Integration of x gives x²/2 + C" },
+          { question: "Solve: 2x + 5 = 13", options: ["x = 4", "x = 3", "x = 5", "x = 6"], correctAnswer: "x = 4", explanation: "2x = 13 - 5 = 8, so x = 4" },
+          { question: "What is sin(90°)?", options: ["1", "0", "√2/2", "-1"], correctAnswer: "1", explanation: "sin(90°) = 1" }
+        ],
+        physics: [
+          { question: "Newton's second law: F = ?", options: ["ma", "mv", "m/a", "a/m"], correctAnswer: "ma", explanation: "Force = mass × acceleration (F = ma)" },
+          { question: "Kinetic energy formula:", options: ["½mv²", "mv²", "½m²v", "m²v²"], correctAnswer: "½mv²", explanation: "Kinetic Energy = ½mv²" },
+          { question: "Ohm's law relates:", options: ["V, I, R", "F, m, a", "P, V, I", "E, m, c"], correctAnswer: "V, I, R", explanation: "Ohm's law: V = IR (Voltage, Current, Resistance)" }
+        ],
+        chemistry: [
+          { question: "Molecular formula of glucose:", options: ["C₆H₁₂O₆", "C₆H₆O₆", "C₁₂H₆O₆", "C₆H₁₂O₁₂"], correctAnswer: "C₆H₁₂O₆", explanation: "Glucose has molecular formula C₆H₁₂O₆" },
+          { question: "Process of solid to gas directly:", options: ["Sublimation", "Evaporation", "Condensation", "Fusion"], correctAnswer: "Sublimation", explanation: "Direct solid to gas transition is sublimation" },
+          { question: "Most electronegative element:", options: ["Fluorine", "Oxygen", "Nitrogen", "Chlorine"], correctAnswer: "Fluorine", explanation: "Fluorine has highest electronegativity" }
+        ],
+        biology: [
+          { question: "Protein synthesis occurs in:", options: ["Ribosomes", "Nucleus", "Mitochondria", "Vacuole"], correctAnswer: "Ribosomes", explanation: "Ribosomes are the sites of protein synthesis" },
+          { question: "Process of cell division:", options: ["Mitosis", "Osmosis", "Diffusion", "Photosynthesis"], correctAnswer: "Mitosis", explanation: "Mitosis is the process of cell division" },
+          { question: "Hormone produced by pancreas:", options: ["Insulin", "Thyroxine", "Adrenaline", "Growth hormone"], correctAnswer: "Insulin", explanation: "Pancreas produces insulin to regulate blood sugar" }
+        ]
+      },
+      advanced: {
+        mathematics: [
+          { question: "Limit of (sin x)/x as x→0:", options: ["1", "0", "∞", "undefined"], correctAnswer: "1", explanation: "This is a standard limit: lim(x→0) (sin x)/x = 1" },
+          { question: "∫e^x dx equals:", options: ["e^x + C", "xe^x + C", "e^x/x + C", "x·e^x + C"], correctAnswer: "e^x + C", explanation: "Integral of e^x is e^x + C" }
+        ],
+        physics: [
+          { question: "Schrödinger equation describes:", options: ["Wave function", "Electric field", "Magnetic field", "Gravitational field"], correctAnswer: "Wave function", explanation: "Schrödinger equation describes quantum wave functions" },
+          { question: "Energy-momentum relation in relativity:", options: ["E² = (pc)² + (mc²)²", "E = pc + mc²", "E = pc - mc²", "E² = pc + mc²"], correctAnswer: "E² = (pc)² + (mc²)²", explanation: "Relativistic energy-momentum relation" }
+        ],
+        chemistry: [
+          { question: "Hybridization of IF₅:", options: ["sp³d²", "sp³d", "sp³", "sp²"], correctAnswer: "sp³d²", explanation: "IF₅ has octahedral geometry with sp³d² hybridization" },
+          { question: "Rate law for reaction A + B → C:", options: ["Rate = k[A][B]", "Rate = k[A] + [B]", "Rate = k[A]/[B]", "Rate = k[A]²[B]"], correctAnswer: "Rate = k[A][B]", explanation: "For elementary reaction, rate = k[A][B]" }
+        ],
+        biology: [
+          { question: "Central dogma of molecular biology:", options: ["DNA → RNA → Protein", "RNA → DNA → Protein", "Protein → RNA → DNA", "DNA → Protein → RNA"], correctAnswer: "DNA → RNA → Protein", explanation: "Information flows from DNA to RNA to Protein" },
+          { question: "ATP yield from glucose in cellular respiration:", options: ["38 ATP", "2 ATP", "36 ATP", "32 ATP"], correctAnswer: "38 ATP", explanation: "Complete glucose oxidation yields ~38 ATP molecules" }
+        ]
+      }
+    };
+
+    // Get questions for the subject and difficulty
+    const subjectKey = subject.toLowerCase();
+    let questions = questionBank[difficulty]?.[subjectKey];
+    
+    if (!questions || questions.length === 0) {
+      // Fallback to intermediate level for same subject
+      questions = questionBank.intermediate?.[subjectKey];
+      
+      if (!questions || questions.length === 0) {
+        // Fallback to beginner level for same subject
+        questions = questionBank.beginner?.[subjectKey];
+        
+        if (!questions || questions.length === 0) {
+          // Last resort: mathematics beginner
+          questions = questionBank.beginner.mathematics;
+        }
+      }
     }
 
-    return questions;
+    // Shuffle and select required number of questions
+    const shuffled = [...questions].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, Math.min(count, shuffled.length));
+    
+    return selected.map(q => ({
+      question: q.question,
+      type: 'mcq',
+      options: q.options,
+      correctAnswer: q.correctAnswer,
+      explanation: q.explanation
+    }));
   }
 
   function calculateDailyActivity(sessions, quizzes) {
@@ -2334,13 +3264,13 @@ Please help with the following:
   // Start server
   const PORT = env.PORT;
   server.listen(PORT, () => {
-    logger.info(`🚀 StudyBuddy Enhanced Server running at http://localhost:${PORT}`);
+    logger.info(`🎯 ChaseJEE Enhanced Server running at http://localhost:${PORT}`);
     logger.info(`📡 API endpoints available at http://localhost:${PORT}/api/`);
     logger.info(`🎮 Socket.IO enabled for real-time features`);
-    logger.info(`💾 Database: ${env.MONGODB_URI.replace(/\/\/.*@/, '//***:***@')}`);
+    logger.info(`💾 Database: ${env.MONGODB_URI}`);
     logger.info(`💻 Environment: ${env.NODE_ENV}`);
     logger.info(`🔒 Security: Enhanced with rate limiting, input validation, and monitoring`);
-    logger.info(`📊 Features: Authentication, Analytics, Quizzes, Real-time Chat, Achievements`);
+    logger.info(`📊 Features: Authentication, Analytics, Quizzes, Real-time Chat, Achievements, JEE Prep`);
     logger.info(`🔧 Process ID: ${process.pid}`);
     logger.info(`💡 Health Check: http://localhost:${PORT}/health`);
     

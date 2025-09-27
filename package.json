@@ -1,7 +1,7 @@
 {
-  "name": "studybuddy-ai-enhanced",
+  "name": "chasejee-ai-enhanced",
   "version": "2.0.0",
-  "description": "Advanced AI-powered Study Buddy with comprehensive learning features and chat history",
+  "description": "Advanced AI-powered ChaseJEE with comprehensive JEE preparation features and chat history",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -26,7 +26,7 @@
     "pwa",
     "gamification"
   ],
-  "author": "StudyBuddy Team",
+  "author": "ChaseJEE Team",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.6.8",

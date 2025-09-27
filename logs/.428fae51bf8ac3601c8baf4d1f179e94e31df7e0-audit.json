@@ -74,6 +74,11 @@
             "date": 1758900232001,
             "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-26.log.3",
             "hash": "097bdffc32da70883e5556ebdb5755fd2a0d1a4d970e0925047a7f4f2e5e4adc"
+        },
+        {
+            "date": 1758912693307,
+            "name": "/home/laaltota/Documents/StudyBuddy-Enhanced2/logs/combined-2025-09-27.log",
+            "hash": "e8f905799d2863206e54fb5701c69112ca834b01ed2f4150227c49b641d1b390"
         }
     ],
     "hashType": "sha256"
